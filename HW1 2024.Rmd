@@ -1,0 +1,160 @@
+---
+title: "HW1 2024"
+author: "Steven He"
+date: "2024-01-18"
+output:
+  pdf_document: default
+  html_document: default
+---
+EID: shh957
+
+Github Link: https://github.com/stevenhe10506/SDSHW1.git
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE ,echo = FALSE)
+library(ggplot2)
+library(dplyr)
+```
+
+## Problem 1
+### Part A
+```{r }
+prof <- read.csv("profs.csv")
+ggplot(prof, aes(x = eval)) +geom_histogram(fill = "red", col = "black", bins = 30) + labs(x = "Average Teaching Evaluation Score", y = "Count", title = "Histogram of Average Teaching Evaluation Scores") 
+```
+
+Graph shows a histogram of the average Teaching score for all the teachers in the dataset, with the x-axis being the score and the y-axis being the number of teachers in each bin. 
+
+Some key takeaways from the graph are that it is unimodal and skewed left. The mean is `r round(mean(prof$eval),2)` and the standard deivation is `r round(sd(prof$eval),2)`.
+
+### Part B
+```{r }
+ggplot(prof, aes(x = native, y = eval)) + geom_boxplot(fill = "red") + labs(x = "Is Native English Speaker", y = "Teacher Evaluation Score", title = "Boxplot of Average Evaluation Score if English is Native Language")
+```
+
+The graph shows the distribution of Evaluation scores for native and non-native english speakers. Y-axis is Teacher Evaluation score and x-axis is whether the teacher is a native english speaker.
+
+The median Evaluation score for non-native speakers is `r round(median(filter(prof, native == "no")$eval),2)` with a IQR of `r round(IQR(filter(prof, native == "no")$eval),2)`. The median Evaluation score for native speakers is `r round(median(filter(prof, native == "yes")$eval),2)` with a IQR of `r round(IQR(filter(prof, native == "yes")$eval),2)`. The boxplot shows that generally native speakers would have a higher evaluation score, and that the native spakers have more outliers. 
+
+
+### Part C
+```{r}
+ggplot(prof, aes(x = eval)) + geom_histogram(fill = "red", col = "black") + labs(x = "Teacher Evaluation Score", y = "Count", title  = "Histogram of Teacher Evaluation Score for Male and Female Teachers") +facet_wrap(~gender)
+```
+
+The Histogram shows the distribution of Evaluation scores faceted based on gender. The x-axis is the evaluation score and the y-axis is the amount of teachers in each bin. 
+
+The mean Evaluation score for male teachers is `r round(mean(filter(prof, gender == "male")$eval),2)` with a SD of `r round(sd(filter(prof, gender == "female")$eval),2)`. The mean Evaluation score for female teachers is `r round(mean(filter(prof, gender == "female")$eval),2)` with a SD of `r round(sd(filter(prof, gender == "female")$eval),2)`. There doesn't seem to be any significant difference in the scores between female and male teachers based on the statistics and the shape of the histograms. 
+
+
+### Part D 
+```{r}
+ggplot(prof, aes(x = beauty, y = eval)) + geom_point() + labs(x = "Attractiveness (-2 to 2)", y = "Teacher Evaluation Score", title = "Scattorplot of Evaluation Scores and Attractiveness")
+
+```
+
+The graph is a scatter plot of attractiveness (from -2 to 2) and Evaluation score, with x-axis being rated attractiveness and y-axis being Evaluation score. 
+
+The correlation between attractiveness and Evaluation score is `r round(cor(prof$beauty, prof$eval),2)`. It is overall very weak and shows that attractiveness doesn't seem to have a significant effect on Evaluation scores. 
+
+## Problem 2
+### Part A
+```{r}
+bikeshare <- read.csv("bikeshare.csv")
+b <-bikeshare %>% 
+  group_by(hr) %>%
+  summarize(av = mean(total))
+ggplot(b, aes(x = hr, y  =av)) + geom_line() + labs(x = "Hour", y = "Average Bike Rentals", title = "Line Graph of Average Bike Rentals Across Hours")
+```
+
+The graph is a line graph showing the distribution of average bike rental to hour of day. The x-axis of the graph is the hour of day and the y-axis is the average bike rentals. The graph is biomodal with a spike at hours 7-8 and another spike at hour 16-17. This makes sense because it corresponds with work commutes at morning and night. 
+
+### Part B
+```{r}
+name <- as_labeller(c(`1` = "Working Day", `0` = "Not Working Day"))
+bikeshare %>% 
+  group_by(hr, workingday) %>%
+  summarize(m = mean(total)) %>%
+  ggplot(aes(x = hr, y = m)) + geom_line() + facet_wrap( ~workingday, labeller = name) + labs(x = "Hour", y = "Average Bike Shares" ,title = "Average Bike Shares per Hour for Working and Not Working Days")
+```
+
+The graphs are line graphs showing the distribution of bike rentals to hour day, faceted by whether or not it is a work day. The working day distribution is bimodal with two spikes on hour 8 and hour 16-17, while the not-working day distribution is unimodal with a max at hour 13 and has a much smoother distribution. An explanation for this distribution is that most people use bikes on non-working days during times where it is most pleasant to ride a bike, so around noon to after-noon. 
+
+### Part C
+```{r}
+name <- as_labeller(c(`1` = "Working Day", `0` = "Not Working Day"))
+bikeshare %>%
+  filter(hr == 9)%>%
+  group_by(weathersit, workingday) %>%
+  summarize(m = mean(total, na.rm= T)) %>%
+  ggplot(aes(x = weathersit, y = m)) + geom_col() + facet_wrap( ~workingday, labeller = name) + labs(x = "Weather Situation Code", y = "Average Bike Shares" ,title = "Average Bike Shares at 9PM per Weather type for Working and Not Working Days")
+```
+
+The graphs is is a barplot of the number of average bike share at 9PM to weather code, with 1 being the the clearest weather and 3 being the rainiest weather, faceted on whether it was a working day. We can see that for both graphs that bike shares decreased substainally for code 3, due to the fact no one want to bike in rain. We can also see that average bike shares were lower during non-working days at every weather code, most-likely because there is less of a need to commute on non-working days.   
+
+## Question 3
+### Part 1
+```{r}
+cap <- read.csv("capmetro_UT.csv")
+cap = mutate(cap,
+day_of_week = factor(day_of_week,
+levels=c("Mon", "Tue", "Wed","Thu", "Fri", "Sat", "Sun")),
+month = factor(month,
+levels=c("Sep", "Oct","Nov")))
+cap %>% 
+  group_by(day_of_week, hour_of_day, month) %>%
+  summarize(m = mean(boarding)) %>%
+  ggplot(aes(x = hour_of_day, y = m, col = month)) + geom_line()  +facet_wrap(~day_of_week) + labs(x = "Hour of Day", y= "Average Boardings",  title = ("Average Boardings Per Month By Day of Week for Sep, Oct, and Nov"))
+  
+```
+
+The figure shows three line graphs ploting average metro boarding for September, October, and November over hour of the day, faceted by day of the week. The peak boarding is roughly around the same time on working days, but not for the weekend which has significantly lower boarding. Because of Labor day and Thanksgiving holiday, the average boarding for September on Mondays and November for Wednesday, Thursday and Friday respectively are all lower than the other months
+
+### Part 2
+```{r}
+cap %>% 
+  ggplot(aes(x = temperature, y = boarding, col = weekend)) + geom_point() + facet_wrap(~hour_of_day) + labs (x = "Temperature (In F)", y = "Average Boardings", title = "Scatterplots of Average Boardings over Temperature"  )
+```
+
+The figure shows scatter plots of AVerage boardings over temperature, with the color depending on where the data point was on a weekday or weekend, and faceted by hour of the day. If we hold weekend status and hour of day constant, the points on the scatter plots stay at roughly the same levels at all temperatures, showing that temperature doesn't have a noticeable effect on boarding. 
+
+## Question 4 
+### Part A 
+```{r}
+bill <- read.csv("billboard.csv")
+bill %>% 
+  group_by(performer, song) %>%
+  summarize(count = length(song))%>%
+  arrange(desc(count)) %>% 
+  head(10)
+
+```
+
+The chart above shows the number of weeks a song spent on Billboard Top 100, with count being the number of weeks, song being the title, and performer being the performer of the song. 
+
+### Part B
+```{r}
+bill %>%
+  filter(year != 1958 & year != 2021) %>%
+  group_by(song, year) %>%
+  summarize(count = length(song)) %>%
+  group_by(year) %>%
+  summarise(m = length(unique(song))) %>%
+  ggplot(aes(x = year, y = m)) + geom_line() + labs(title = "Line Graph of Unique Billboard Songs Over 1959 to 2020", x = "Year", y= "Number of Unique Billboard Songs")
+```
+
+The line graph above shows the number of unique songs appearing on any position on the Billboard Top 100 over the years 1959 to 2020. The graph generally trends downwards from 1970 to 2000, then has a general trend upward after 2000. 
+
+### Part C
+```{r}
+bill %>%
+  group_by(performer, song) %>%
+  summarise(count = length(song)) %>%
+  filter(count >=10) %>%
+  group_by(performer) %>%
+  summarise(l = length(performer)) %>%
+  filter(l >= 30)%>%
+  ggplot(aes(x = performer, y = l)) + geom_col() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size = rel(1))) + labs(title = "Bar plot of Artists with at least 30 Ten-week Billboard Hits", x = "Performer", y = "Number of Ten-week Hits") + coord_flip()
+
+```
+
+The figure above shows the bar plot of all the artists with at least 30 Ten-Week Billboard hits and the number of hits they have. Elton John has the most Ten-Week Hits out of the 19 artists on the plot.  
